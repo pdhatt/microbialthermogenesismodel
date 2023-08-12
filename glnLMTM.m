@@ -1,13 +1,13 @@
-%This document is meant to model arcB heat generation curve
+%This document is meant to model glnL knockout strain in E. coli BW25113  heat generation curve
 clc
 close all
 clear all
 
 syms X
 %glnL growth Gompertz regression microaerobic
-YM = 0.4456;
-Y0 = 8.058e-024;
-K = 2.044;
+YM = 0.3999;
+Y0 = 2.963e-007;
+K = 1.226;
 
 %model for growth
 OD = YM*(Y0/YM)^(exp(-K*X));
@@ -23,7 +23,7 @@ SD2 =0.8521;
 %model for heat generation (HG)
 Y1 = Amp1*exp(-0.5*(((X-Mean1)/SD1)^2));
 Y2 = Amp2*exp(-0.5*(((X-Mean2)/SD2)^2));
-HG = Y1 + Y2
+HG = Y1 + Y2;
 
 
 %glnL microaerobic IC [ATP] graph - lognormal curve
@@ -34,11 +34,27 @@ GeoSD = 1.611;
 %model equation is Y=(A/X)*exp(-0.5*(ln(X/GeoMean)/ln(GeoSD))^2)
 ATPic = (A/X)*exp(-0.5*(log(X/GeoMean)/log(GeoSD))^2)*(1/1000);
 
-%{
+
 %generating graphs
 figure (1)
 fplot(OD,[0,10])
-%}
+hold on 
+fplot(mu,[0,10])
+title("OD600 vs Time[h]")
+hold off
+
+figure(2)
+fplot(HG,[0,10])
+hold on
+title("Heat Generated [W] vs Time [h]")
+hold off
+
+figure(3)
+fplot(ATPic,[0,10])
+hold on 
+title("IC [ATP] vs Time [h]")
+hold off
+
 
 %Now we can start calculating the data for our model
 
@@ -49,7 +65,7 @@ cell = OD*8*(10^8)*10; %number of cells
 
 %We also need to convert [ATP] to moles ATP assuming that 1fL volume per
 %cell
-molATP = ATPic*10^(-15) %mol ATP/cell
+molATP = ATPic*10^(-15); %mol ATP/cell
 
 %Also need some standard values for conversion of ATP hydrolysis, 
 %this model assumes all heat release is from ATP hydrolysis
@@ -74,13 +90,8 @@ heatrelease = ATPheat*cell; %J
 ATPflux = 2.18939e-17; %molATP/cell/s
 
 %now we need to calculate the peak of our heat generation
-h1 = diff(HG,X);
+h1 = @(X) diff(HG,X);
 
-%{ 
-Just to check to make sure graph looks correct
-figure(5)
-fplot(h1,[0,10])
-%}
 
 %Now to find zero of h1 to find maximum of HG
 x0 = 1;
@@ -106,7 +117,7 @@ maxHG = heatpeakcells*ATP_max;
 
 %now we can find our inefficiency score for this cell (how much of its ATP
 %flux is being wasted as heat
-glnL_heatinefficiency = glnLHG_max / maxHG
+glnL_heatinefficiency = glnLHG_max / maxHG;
 
 
 %finding intracellular atp at this time
@@ -125,7 +136,7 @@ correctedheatrelease = (D*heatrelease)*1000; %multiplied by factor of 1000 to ge
 HG2 = 1000*HG;
 
 
-figure(2)
+figure(4)
 fplot(correctedheatrelease, [0,10],'black','linestyle','--','linewidth', 2)
 hold on
 %title("{\it \DeltaglnL} Heat Generation")
@@ -139,22 +150,59 @@ ylim([0 2])
 hold off
 
 
+%Model Correlation Coefficient
+%define HG as a function to get correlation coeff
+fHG = HGfun;
+fcorrectedheatrelease = @(X) (42139161873821488279192515636911148573*(6997935428228437/9444732965739290427392)^exp(-(613*X)/500)*exp(-(40564819207303340847894502572032*log((25*X)/114)^2)/18448132603693387915653578573329))/(4835703278458516698824704000000000000*X);
+n = 10;
+
+fHGlist = [];
+fcorrectedheatreleaselist = [];
 
 
-%check model error
-residualsq = sqrt((correctedheatrelease - HG)^2);
-%{
-figure(5)
-fplot(residualsq, [0,10])
-hold on
-title("Residual Error plot")
-hold off
-%}
-%Sum residuals
-f1 = @(X) (((2180405149512469.*exp(-((10000.*X)/3087 - 20410/3087).^2./2))./4611686018427387904 + (1950743185794785.*exp(-((10000.*X)./8521 - 33800/8521).^2./2))./1152921504606846976 - (4436771047263575751618575585056714569.*(6153490378476037/340282366920938463463374607431768211456).^exp(-(511.*X)./250).*exp(-(40564819207303340847894502572032.*log((25.*X)./114).^2)./18448132603693387915653578573329))./(604462909807314587353088000000000000000.*X)).^2).^(1/2);
-sol = integral(f1,0,10)
+%define an array of function outputs
+for i = 1.8527777781:0.00277777778:3.69
+    fHGlist = [fHGlist, fHG(i)];
+    fcorrectedheatreleaselist = [fcorrectedheatreleaselist, fcorrectedheatrelease(i)];
+end
 
 
+
+
+%disp(fHGlist)
+%disp(fcorrectedheatreleaselist)
+
+%print lists of all heat generation outputs from 2 gaussian fitted equation
+%(fHGlist) and from MTM model (fcorrectedheatreleaselist)
+fprintf('2Gauss HG prediction: [%s]\n', join(string(fHGlist), ','));
+
+fprintf('MTM prediction: [%s]\n', join(string(fcorrectedheatreleaselist), ','));
+
+
+
+
+%% Section 2: AUC Analysis by Integration of Heat Generation Every 30min increment of the IC [ATP] and HG curves to prove coincident peaks
+
+%initialize lists to store HG and ATP AUC (area under the curve) values
+HGauc = [];
+ATPauc = [];
+
+timelist = [0.5 : 0.5 : 10];
+%Define for loop, looping through # of hours: [0:0.5:10]
+for i = timelist
+    tlast = i-0.5;
+    tcurr = i;
+    ATPauc = [ATPauc, int(ATPic,tlast,tcurr)]; %find definite integral for AUC
+    HGauc = [HGauc, int(HG,tlast,tcurr)]; %find definite integral for AUC
+end
+
+ATPauc_rounded = round(ATPauc, 10); %round values to print as list
+HGauc_rounded = round(HGauc, 10); %round values to print as list
+ 
+disp("ATPauc_rounded: ")
+disp(ATPauc_rounded)
+disp("HGauc_rounded: ")
+disp(HGauc_rounded)
 
 
 
