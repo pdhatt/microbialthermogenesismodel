@@ -1,13 +1,13 @@
-%This document is meant to model arcB heat generation curve
+%This document is meant to model arcB knockout strain in E. coli BW25113 heat generation curve
 clc
 close all
 clear all
 
 syms X
 %arcB growth Gompertz regression
-YM = 0.413;
-Y0 = 0.0002143;
-K = 1.185;
+YM = 0.4094;
+Y0 = 0.000007933;
+K = 1.21;
 
 OD = YM*(Y0/YM)^(exp(-K*X));
 
@@ -22,6 +22,7 @@ SD2 =1.112;
 Y1 = Amp1*exp(-0.5*(((X-Mean1)/SD1)^2));
 Y2 = Amp2*exp(-0.5*(((X-Mean2)/SD2)^2));
 HG = Y1 + Y2;
+
 
 %arcB microaerobic IC [ATP] graph - lognormal curve
 A = 22.16;
@@ -53,7 +54,7 @@ fplot(ATPic,[0,10])
 hold on 
 title("IC [ATP] vs Time [h]")
 hold off
-%}
+
 %Now we can start calculating the data for our model
 
 %First we need to find the OD at each point which we already have eqn
@@ -89,11 +90,6 @@ ATPflux = 2.18939e-17; %molATP/cell/s
 %now we need to calculate the peak of our heat generation
 h1 = diff(HG,X);
 
-%{ 
-Just to check to make sure graph looks correct
-figure(5)
-fplot(h1,[0,10])
-%}
 
 %Now to find zero of h1 to find maximum of HG
 x0 = 1;
@@ -150,17 +146,54 @@ ylim([0 2])
 hold off
 
 
-%{
-%check model error
-residualsq = sqrt((correctedheatrelease - HG)^2);
-%{
-figure(5)
-fplot(residualsq, [0,10])
-hold on
-title("Residual Error plot")
-hold off
-%}
-%Sum residuals
-f1 = @(X) (((7268017165041563.*exp(-((125.*X)/139 - 1983/556).^2/2))/4611686018427387904 + (7105685817192919.*exp(-((10000.*X)/4421 - 22260/4421).^2/2))/18446744073709551616 - (7547945393315925697001934244698567999*(4785880453990263/9223372036854775808).^exp(-(237.*X)/200).*exp(-(40564819207303340847894502572032.*log((1000.*X)/5559).^2)/30218920771581602135127064162089))/(967140655691703339764940800000000000000.*X)).^2).^(1/2);
-sol = integral(f1,0,10);
-%}
+%define HG as a function to get correlation coeff
+fHG = HGfun;
+fcorrectedheatrelease = @(X) (9631524560795680777368169159096849027*(2859560737405723/147573952589676412928)^exp(-(121*X)/100)*exp(-(40564819207303340847894502572032*log((1000*X)/5559)^2)/30218920771581602135127064162089))/(1208925819614629174706176000000000000*X);
+n = 10;
+
+fHGlist = [];
+fcorrectedheatreleaselist = [];
+
+
+%define an array of function outputs
+for i = 1.8527777781:0.00277777778:4.498
+    fHGlist = [fHGlist, fHG(i)];
+    fcorrectedheatreleaselist = [fcorrectedheatreleaselist, fcorrectedheatrelease(i)];
+end
+
+
+
+%print lists of all heat generation outputs from 2 gaussian fitted equation
+%(fHGlist) and from MTM model (fcorrectedheatreleaselist)
+fprintf('2Gauss HG prediction: [%s]\n', join(string(fHGlist), ','));
+
+fprintf('MTM prediction: [%s]\n', join(string(fcorrectedheatreleaselist), ','));
+
+
+
+
+
+%% Section 2: AUC Analysis by Integration of Heat Generation Every 30min increment of the IC [ATP] and HG curves to prove coincident peaks
+
+%initialize lists to store HG and ATP AUC (area under the curve) values
+HGauc = [];
+ATPauc = [];
+
+timelist = [0.5 : 0.5 : 10];
+%Define for loop, looping through # of hours: [0:0.5:10]
+for i = timelist
+    tlast = i-0.5;
+    tcurr = i;
+    ATPauc = [ATPauc, int(ATPic,tlast,tcurr)]; %find definite integral for AUC
+    HGauc = [HGauc, int(HG,tlast,tcurr)]; %find definite integral for AUC
+end
+
+ATPauc_rounded = round(ATPauc, 10); %round values to print as list
+HGauc_rounded = round(HGauc, 10); %round values to print as list
+ 
+disp("ATPauc_rounded: ")
+disp(ATPauc_rounded)
+disp("HGauc_rounded: ")
+disp(HGauc_rounded)
+
+
