@@ -1,6 +1,6 @@
 # microbialthermogenesismodel
 
-This is the github repository for the Microbial Thermogenesis Model. The code was verified to work with MATLAB version R2022a and MATLAB Online as of March 22, 2023. 
+This is the github repository for the Microbial Thermogenesis Model. The code was verified to work with MATLAB version R2022a and MATLAB Online as of August 14, 2023 
 
 The code is annotated with comments for what each step of the code is conducting. 
 
