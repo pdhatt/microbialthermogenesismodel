@@ -1,28 +1,29 @@
-%This document is meant to model arcB heat generation curve
+%This document is meant to model wild-type (WT) heat generation curve
 clc
 close all
 clear all
 
 syms X
 %WT growth Gompertz regression microaerobic
-YM = 0.4709;
-Y0 = 0.0002975;
-K = 1.085;
+YM = 0.4186;
+Y0 = 1.041e-8;
+K = 1.343;
 
 %model for growth
 OD = YM*(Y0/YM)^(exp(-K*X));
 
+
 %WT heat generation graph, sum of 2 gaussian
 Amp1 = 0.001375;
-%Amp2 = 0.001590;
+Amp2 = 0.001590;
 Mean1 = 3.382;
-%Mean2 = 4.631;
+Mean2 = 4.631;
 SD1 = 1.323;
-%SD2 = 0.6236;
+SD2 = 0.6236;
 
 %model for heat generation (HG)
 Y1 = Amp1*exp(-0.5*(((X-Mean1)/SD1)^2));
-%Y2 = Amp2*exp(-0.5*(((X-Mean2)/SD2)^2));
+Y2 = Amp2*exp(-0.5*(((X-Mean2)/SD2)^2));
 HG = Y1;
 
 
@@ -39,7 +40,23 @@ ATPic = (A/X)*exp(-0.5*(log(X/GeoMean)/log(GeoSD))^2)*1/1000;
 
 %generating graphs
 figure (1)
+fplot(OD,[0,10])
+hold on 
+fplot(mu,[0,10])
+title("OD600 vs Time[h]")
+hold off
+
+figure(2)
 fplot(HG,[0,10])
+hold on
+title("Heat Generated [W] vs Time [h]")
+hold off
+
+figure(3)
+fplot(ATPic,[0,10])
+hold on 
+title("IC [ATP] vs Time [h]")
+hold off
 
 
 %Now we can start calculating the data for our model
@@ -79,11 +96,6 @@ ATPflux = 2.18939e-17; %molATP/cell/s
 %now we need to calculate the peak of our heat generation
 h1 = diff(HG,X);
 
-%{ 
-Just to check to make sure graph looks correct
-figure(5)
-fplot(h1,[0,10])
-%}
 
 %Now to find zero of h1 to find maximum of HG
 x0 = 1;
@@ -109,7 +121,7 @@ maxHG = heatpeakcells*ATP_max;
 
 %now we can find our inefficiency score for this cell (how much of its ATP
 %flux is being wasted as heat
-WT_heatinefficiency = WTHG_max / maxHG
+WT_heatinefficiency = WTHG_max / maxHG;
 
 
 %finding intracellular atp at this time
@@ -127,7 +139,7 @@ D = (ATPflux/ATP_cmax)*WT_heatinefficiency;
 correctedheatrelease = (D*heatrelease)*1000; %multiply by 1000 to get to mW
 HG2 = HG*1000;
 
-figure(2)
+figure(4)
 fplot(correctedheatrelease, [0,10],'black','linestyle','--','linewidth', 2)
 hold on
 %title("Wild-Type Heat Generation")
@@ -140,20 +152,62 @@ ylim([0 2])
 %xlabel("Time [h]")
 hold off
 
+%Model Correlation Coefficient
+%define HG as a function to get correlation coeff
+fHG = HGfun;
+fcorrectedheatrelease = @(X) (116744598465378116936147089577991124157*(3758038038159427/151115727451828646838272)^exp(-(1343*X)/1000)*exp(-(162259276829213363391578010288128*log((200*X)/783)^2)/46812486908459028096945199773025))/(19342813113834066795298816000000000000*X);
+X=10;
+n = 10;
 
-%check model error
-residualsq = sqrt((correctedheatrelease - HG)^2);
-%{
-figure(5)
-fplot(residualsq, [0,10])
-hold on
-title("Residual Error plot")
-hold off
-%}
 
-%Sum residuals
-f1 = @(X) (((11.*exp(-((1000.*X)/1323 - 3382/1323).^2/2))/8000 - (46757410292627837762530890380921259603.*(7/11080).^exp(-(217.*X)/200).*exp(-(162259276829213363391578010288128.*log((200.*X)/783).^2)/46812486908459028096945199773025))/(7737125245533626718119526400000000000000.*X)).^2).^(1/2);
-sol = integral(f1,0,10)
+fHGlist = [];
+fcorrectedheatreleaselist = [];
+
+
+%define an array of function outputs
+for i = 1.8527777781:0.00277777778:4.5
+    fHGlist = [fHGlist, fHG(i)];
+    fcorrectedheatreleaselist = [fcorrectedheatreleaselist, fcorrectedheatrelease(i)];
+end
+
+
+
+
+%disp(fHGlist)
+
+
+%print lists of all heat generation outputs from 2 gaussian fitted equation
+%(fHGlist) and from MTM model (fcorrectedheatreleaselist)
+fprintf('2Gauss HG prediction: [%s]\n', join(string(fHGlist), ','));
+
+
+fprintf('MTM prediction: [%s]\n', join(string(fcorrectedheatreleaselist), ','));
+
+
+
+
+%% Section 2: AUC Analysis by Integration of Heat Generation Every 30min increment of the IC [ATP] and HG curves to prove coincident peaks
+
+%initialize lists to store HG and ATP AUC (area under the curve) values
+HGauc = [];
+ATPauc = [];
+
+timelist = [0.5 : 0.5 : 10];
+%Define for loop, looping through # of hours: [0:0.5:10]
+for i = timelist
+    tlast = i-0.5;
+    tcurr = i;
+    ATPauc = [ATPauc, int(ATPic,tlast,tcurr)]; %find definite integral for AUC
+    HGauc = [HGauc, int(HG,tlast,tcurr)]; %find definite integral for AUC
+end
+
+ATPauc_rounded = round(ATPauc, 10); %round values to print as list
+HGauc_rounded = round(HGauc, 10); %round values to print as list
+ 
+disp("ATPauc_rounded: ")
+disp(ATPauc_rounded)
+disp("HGauc_rounded: ")
+disp(HGauc_rounded)
 
 
 
