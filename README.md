@@ -4,6 +4,8 @@ This is the github repository for the Microbial Thermogenesis Model. The code wa
 
 The code is annotated with comments for what each step of the code is conducting. 
 
+The model background and assumptions are explained in the publication cited below.
+
 There are 4 files, one for each strain (ArcB, GlnL, YccC, and wild-type) tested in the original publication.
 
 Originally developed by Puneet Dhatt and Tae Seok Moon
