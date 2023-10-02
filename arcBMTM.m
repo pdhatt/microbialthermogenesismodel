@@ -195,5 +195,3 @@ disp("ATPauc_rounded: ")
 disp(ATPauc_rounded)
 disp("HGauc_rounded: ")
 disp(HGauc_rounded)
-
-
