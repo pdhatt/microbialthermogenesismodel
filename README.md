@@ -1,12 +1,12 @@
 # microbialthermogenesismodel
 
-This is the github repository for the Microbial Thermogenesis Model. The code was verified to work with MATLAB version R2022a and MATLAB Online as of August 14, 2023 
+This is the github repository for the Microbial Thermogenesis Model. The code was verified to work with MATLAB version R2022a and MATLAB Online as of Oct 2, 2023.
 
 The code is annotated with comments for what each step of the code is conducting. 
 
 The model background and assumptions are explained in the publication cited below.
 
-There are 4 files, one for each strain (ArcB, GlnL, YccC, and wild-type) tested in the original publication.
+There are 4 files, one for each strain (ArcB, GlnL, YccC, and wild-type) tested in the original publication. Running the code will give you the plots for the model figures in the paper (Figure 5).
 
 Originally developed by Puneet Dhatt and Tae Seok Moon
 
