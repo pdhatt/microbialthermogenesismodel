@@ -12,6 +12,8 @@ K = 1.343;
 %model for growth
 OD = YM*(Y0/YM)^(exp(-K*X));
 
+mu = diff(OD,X);
+
 
 %WT heat generation graph, sum of 2 gaussian
 Amp1 = 0.001375;
