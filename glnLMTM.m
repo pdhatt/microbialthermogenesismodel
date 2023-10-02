@@ -26,6 +26,8 @@ Y2 = Amp2*exp(-0.5*(((X-Mean2)/SD2)^2));
 HG = Y1 + Y2;
 
 
+
+
 %glnL microaerobic IC [ATP] graph - lognormal curve
 A = 11.76;
 GeoMean = 4.560;
@@ -34,6 +36,7 @@ GeoSD = 1.611;
 %model equation is Y=(A/X)*exp(-0.5*(ln(X/GeoMean)/ln(GeoSD))^2)
 ATPic = (A/X)*exp(-0.5*(log(X/GeoMean)/log(GeoSD))^2)*(1/1000);
 
+mu = diff(OD,X);
 
 %generating graphs
 figure (1)
@@ -203,6 +206,3 @@ disp("ATPauc_rounded: ")
 disp(ATPauc_rounded)
 disp("HGauc_rounded: ")
 disp(HGauc_rounded)
-
-
-
