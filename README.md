@@ -6,7 +6,7 @@ The code is annotated with comments for what each step of the code is conducting
 
 There are 4 files, one for each strain (ArcB, GlnL, YccC, and wild-type) tested in the original publication.
 
-Originally developed by Puneet Dhatt
+Originally developed by Puneet Dhatt and Tae Seok Moon
 
 All assumptions of the model and model development steps are included in the original publication's method section.
 
